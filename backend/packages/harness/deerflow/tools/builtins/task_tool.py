@@ -81,11 +81,13 @@ def task_tool(
     thread_id = None
     parent_model = None
     trace_id = None
+    dynmic_key = ""
 
     if runtime is not None:
         sandbox_state = runtime.state.get("sandbox")
         thread_data = runtime.state.get("thread_data")
         thread_id = runtime.context.get("thread_id") if runtime.context else None
+        dynmic_key = runtime.context.get("dynmic_key", "") if runtime.context else ""
 
         # Try to get parent model from configurable
         metadata = runtime.config.get("metadata", {})
@@ -110,6 +112,7 @@ def task_tool(
         thread_data=thread_data,
         thread_id=thread_id,
         trace_id=trace_id,
+        dynmic_key=dynmic_key,
     )
 
     # Start background execution (always async to prevent blocking)

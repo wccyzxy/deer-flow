@@ -18,6 +18,7 @@ def create_chat_model(name: str | None = None, thinking_enabled: bool = False, *
         A chat model instance.
     """
     config = get_app_config()
+    logger.info(f"config: {config}")
     if name is None:
         name = config.models[0].name
     model_config = config.get_model_config(name)
@@ -77,6 +78,10 @@ def create_chat_model(name: str | None = None, thinking_enabled: bool = False, *
         elif "reasoning_effort" not in model_settings_from_config:
             model_settings_from_config["reasoning_effort"] = "medium"
 
+    logger.info(f"model_settings_from_config: {model_settings_from_config}")
+    dynamic_key = kwargs.pop("dynamic_key", "")
+    if dynamic_key != "":
+        model_settings_from_config["api_key"] = dynamic_key
     model_instance = model_class(**kwargs, **model_settings_from_config)
 
     if is_tracing_enabled():

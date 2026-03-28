@@ -132,6 +132,7 @@ class SubagentExecutor:
         thread_data: ThreadDataState | None = None,
         thread_id: str | None = None,
         trace_id: str | None = None,
+        dynamic_key: str = "",
     ):
         """Initialize the executor.
 
@@ -151,6 +152,7 @@ class SubagentExecutor:
         self.thread_id = thread_id
         # Generate trace_id if not provided (for top-level calls)
         self.trace_id = trace_id or str(uuid.uuid4())[:8]
+        self.dynamic_key = dynamic_key
 
         # Filter tools based on config
         self.tools = _filter_tools(
@@ -164,7 +166,7 @@ class SubagentExecutor:
     def _create_agent(self):
         """Create the agent instance."""
         model_name = _get_model_name(self.config, self.parent_model)
-        model = create_chat_model(name=model_name, thinking_enabled=False)
+        model = create_chat_model(name=model_name, thinking_enabled=False, dynamic_key=self.dynamic_key)
 
         from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
 
