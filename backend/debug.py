@@ -45,10 +45,10 @@ async def main():
     config = {
         "configurable": {
             "thread_id": "debug-thread-001",
-            "thinking_enabled": True,
+            "thinking_enabled": False,
             "is_plan_mode": True,
             # Uncomment to use a specific model
-            "model_name": "kimi-k2.5",
+            "model_name": "deepseek-chat",
         }
     }
 
