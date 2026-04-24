@@ -189,13 +189,47 @@ fi
 
 echo ""
 
+PROXY_CONFIG=""
+if [ -n "$HTTP_PROXY" ] || [ -n "$HTTPS_PROXY" ]; then
+    echo -e "${BLUE}Proxy detected:${NC}"
+    [ -n "$HTTP_PROXY" ] && echo "  HTTP_PROXY=$HTTP_PROXY"
+    [ -n "$HTTPS_PROXY" ] && echo "  HTTPS_PROXY=$HTTPS_PROXY"
+    
+    # 构建代理参数
+    PROXY_ARGS=""
+    [ -n "$HTTP_PROXY" ] && PROXY_ARGS="$PROXY_ARGS --build-arg HTTP_PROXY=$HTTP_PROXY"
+    [ -n "$HTTPS_PROXY" ] && PROXY_ARGS="$PROXY_ARGS --build-arg HTTPS_PROXY=$HTTPS_PROXY"
+fi
+
+# ── skip-build ──────────────────────────────────────────────────────────────────────
+
+if [ "$CMD" = "skip-build" ]; then
+    # Set minimal env var defaults so docker compose can parse the file without
+    # warning about unset variables that appear in volume specs.
+    export DEER_FLOW_HOME="${DEER_FLOW_HOME:-$REPO_ROOT/backend/.deer-flow}"
+    export DEER_FLOW_CONFIG_PATH="${DEER_FLOW_CONFIG_PATH:-$DEER_FLOW_HOME/config.yaml}"
+    export DEER_FLOW_EXTENSIONS_CONFIG_PATH="${DEER_FLOW_EXTENSIONS_CONFIG_PATH:-$DEER_FLOW_HOME/extensions_config.json}"
+    export DEER_FLOW_DOCKER_SOCKET="${DEER_FLOW_DOCKER_SOCKET:-/var/run/docker.sock}"
+    export DEER_FLOW_REPO_ROOT="${DEER_FLOW_REPO_ROOT:-$REPO_ROOT}"
+    export BETTER_AUTH_SECRET="${BETTER_AUTH_SECRET:-placeholder}"
+    "${COMPOSE_CMD[@]}" $extra_args up -d --remove-orphans $services
+    exit 0
+fi
+
 # ── Step 2: Build and start ───────────────────────────────────────────────────
 
 echo "Building images and starting containers..."
 echo ""
 
-# shellcheck disable=SC2086
-"${COMPOSE_CMD[@]}" $extra_args up --build -d --remove-orphans $services
+if [ -n "$PROXY_ARGS" ]; then
+    # 先构建镜像（传递代理参数）
+    "${COMPOSE_CMD[@]}" $extra_args build --build-arg HTTP_PROXY=$HTTP_PROXY --build-arg HTTPS_PROXY=$HTTPS_PROXY $services
+    
+    # 然后启动容器
+    "${COMPOSE_CMD[@]}" $extra_args up -d --remove-orphans $services
+else
+    "${COMPOSE_CMD[@]}" $extra_args up --build -d --remove-orphans $services
+fi
 
 echo ""
 echo "=========================================="

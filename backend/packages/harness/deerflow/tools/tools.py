@@ -40,6 +40,7 @@ def get_available_tools(
     Returns:
         List of available tools.
     """
+    logger.info(f"groups: {groups}")
     config = get_app_config()
     loaded_tools = [resolve_variable(tool.use, BaseTool) for tool in config.tools if groups is None or tool.group in groups]
 

@@ -2,6 +2,11 @@
 FROM python:3.12-slim
 
 ARG NODE_MAJOR=22
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
+ENV HTTP_PROXY=$HTTP_PROXY \
+    HTTPS_PROXY=$HTTPS_PROXY
 
 # Install system dependencies + Node.js (provides npx for MCP servers)
 RUN apt-get update && apt-get install -y \
@@ -27,10 +32,13 @@ WORKDIR /app
 
 # Copy frontend source code
 COPY backend ./backend
+COPY markitdown ./markitdown
 
 # Install dependencies with cache mount
 RUN --mount=type=cache,target=/root/.cache/uv \
     sh -c "cd backend && uv sync"
+
+RUN sh -c "cd markitdown && pip install -e 'packages/markitdown[all]'"
 
 # Expose ports (gateway: 8001, langgraph: 2024)
 EXPOSE 8001 2024

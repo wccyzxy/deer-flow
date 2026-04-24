@@ -99,21 +99,21 @@ async def upload_files(
 
             logger.info(f"Saved file: {safe_filename} ({len(content)} bytes) to {relative_path}")
 
-            # Check if file should be converted to markdown
-            file_ext = file_path.suffix.lower()
-            if file_ext in CONVERTIBLE_EXTENSIONS:
-                md_path = await convert_file_to_markdown(file_path)
-                if md_path:
-                    md_relative_path = str(paths.sandbox_uploads_dir(thread_id) / md_path.name)
-                    md_virtual_path = f"{VIRTUAL_PATH_PREFIX}/uploads/{md_path.name}"
+            # # Check if file should be converted to markdown
+            # file_ext = file_path.suffix.lower()
+            # if file_ext in CONVERTIBLE_EXTENSIONS:
+            #     md_path = await convert_file_to_markdown(file_path)
+            #     if md_path:
+            #         md_relative_path = str(paths.sandbox_uploads_dir(thread_id) / md_path.name)
+            #         md_virtual_path = f"{VIRTUAL_PATH_PREFIX}/uploads/{md_path.name}"
 
-                    if sandbox_id != "local":
-                        sandbox.update_file(md_virtual_path, md_path.read_bytes())
+            #         if sandbox_id != "local":
+            #             sandbox.update_file(md_virtual_path, md_path.read_bytes())
 
-                    file_info["markdown_file"] = md_path.name
-                    file_info["markdown_path"] = md_relative_path
-                    file_info["markdown_virtual_path"] = md_virtual_path
-                    file_info["markdown_artifact_url"] = f"/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/{md_path.name}"
+            #         file_info["markdown_file"] = md_path.name
+            #         file_info["markdown_path"] = md_relative_path
+            #         file_info["markdown_virtual_path"] = md_virtual_path
+            #         file_info["markdown_artifact_url"] = f"/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/{md_path.name}"
 
             uploaded_files.append(file_info)
 

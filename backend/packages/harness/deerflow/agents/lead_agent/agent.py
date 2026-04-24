@@ -16,7 +16,7 @@ from deerflow.agents.middlewares.tool_error_handling_middleware import build_lea
 from deerflow.agents.middlewares.view_image_middleware import ViewImageMiddleware
 from deerflow.agents.thread_state import ThreadState
 from deerflow.config.agents_config import load_agent_config
-from deerflow.config.app_config import get_app_config
+from deerflow.config.app_config import get_app_config, set_app_config
 from deerflow.config.summarization_config import get_summarization_config
 from deerflow.models import create_chat_model
 
@@ -282,8 +282,12 @@ def make_lead_agent(config: RunnableConfig):
     is_bootstrap = cfg.get("is_bootstrap", False)
     agent_name = cfg.get("agent_name")
     dynamic_key = cfg.get("dynamic_key", "")
+    dynamic_tool_groups = cfg.get("dynamic_tool_groups", None)
 
     agent_config = load_agent_config(agent_name) if not is_bootstrap else None
+    if dynamic_tool_groups and agent_config:
+        agent_config.tool_groups = dynamic_tool_groups
+    
     # Custom agent model or fallback to global/default model resolution
     agent_model_name = agent_config.model if agent_config and agent_config.model else _resolve_model_name()
 
@@ -292,6 +296,9 @@ def make_lead_agent(config: RunnableConfig):
 
     app_config = get_app_config()
     model_config = app_config.get_model_config(model_name) if model_name else None
+    if model_config:
+        model_config.api_key = dynamic_key
+        app_config.update_model_config(model_name, model_config)
 
     if model_config is None:
         raise ValueError("No chat model could be resolved. Please configure at least one model in config.yaml or provide a valid 'model_name'/'model' in the request.")
@@ -322,6 +329,7 @@ def make_lead_agent(config: RunnableConfig):
             "reasoning_effort": reasoning_effort,
             "is_plan_mode": is_plan_mode,
             "subagent_enabled": subagent_enabled,
+            "dynamic_key": ""
         }
     )
 
@@ -336,9 +344,17 @@ def make_lead_agent(config: RunnableConfig):
         )
 
     # Default lead agent (unchanged behavior)
+    groups = None
+    if agent_config:
+        groups=agent_config.tool_groups
+    elif dynamic_tool_groups is not None:
+        groups = dynamic_tool_groups
+    else:
+        groups = None
+
     return create_agent(
-        model=create_chat_model(name=model_name, thinking_enabled=thinking_enabled, reasoning_effort=reasoning_effort, dynamic_key=dynamic_key),
-        tools=get_available_tools(model_name=model_name, groups=agent_config.tool_groups if agent_config else None, subagent_enabled=subagent_enabled),
+        model=create_chat_model(name=model_name, thinking_enabled=thinking_enabled, reasoning_effort=reasoning_effort),
+        tools=get_available_tools(model_name=model_name, groups=groups, subagent_enabled=subagent_enabled),
         middleware=_build_middlewares(config, model_name=model_name, agent_name=agent_name),
         system_prompt=apply_prompt_template(subagent_enabled=subagent_enabled, max_concurrent_subagents=max_concurrent_subagents, agent_name=agent_name),
         state_schema=ThreadState,

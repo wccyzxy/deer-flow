@@ -207,6 +207,13 @@ class AppConfig(BaseModel):
         """
         return next((model for model in self.models if model.name == name), None)
 
+    def update_model_config(self, name: str, modelConfig: ModelConfig):
+        for i, model in enumerate(self.models):
+            if model.name == name:
+                self.models[i] = modelConfig
+                return
+        raise ValueError(f"Model with name '{name}' not found")
+
     def get_tool_config(self, name: str) -> ToolConfig | None:
         """Get the tool config by name.
 
