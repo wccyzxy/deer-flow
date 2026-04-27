@@ -57,12 +57,11 @@ def _create_summarization_middleware() -> SummarizationMiddleware | None:
     keep = config.keep.to_tuple()
 
     # Prepare model parameter
-    if config.model_name:
-        model = config.model_name
-    else:
-        # Use a lightweight model for summarization to save costs
-        # Falls back to default model if not explicitly specified
-        model = create_chat_model(thinking_enabled=False)
+    if not config.model_name:
+        logger.exception("Failed to create summarization middleware, please set the summarization model")
+        return None
+    
+    model = create_chat_model(config.model_name, thinking_enabled=False)
 
     # Prepare kwargs
     kwargs = {
