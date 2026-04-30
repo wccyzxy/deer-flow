@@ -25,6 +25,7 @@ def get_available_tools(
     include_mcp: bool = True,
     model_name: str | None = None,
     subagent_enabled: bool = False,
+    dynamic_tool_groups: list[str] | None = None,
 ) -> list[BaseTool]:
     """Get all available tools from config.
 
@@ -42,10 +43,13 @@ def get_available_tools(
     """
     logger.info(f"groups: {groups}")
     config = get_app_config()
-    loaded_tools = [resolve_variable(tool.use, BaseTool) for tool in config.tools if groups is None or tool.group in groups]
+    tool_groups = dynamic_tool_groups if dynamic_tool_groups is not None else groups
+    loaded_tools = [resolve_variable(tool.use, BaseTool) for tool in config.tools if tool_groups is None or tool.group in tool_groups]
 
     # Conditionally add tools based on config
     builtin_tools = BUILTIN_TOOLS.copy()
+    if dynamic_tool_groups is not None:
+        builtin_tools = BUILTIN_TOOLS.copy() if 'builtin' in dynamic_tool_groups else []
 
     # Add subagent tools only if enabled via runtime parameter
     if subagent_enabled:
